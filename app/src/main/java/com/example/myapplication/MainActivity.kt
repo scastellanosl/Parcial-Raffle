@@ -3,6 +3,7 @@ package com.example.myapplication
 import android.os.Bundle
 import java.util.Calendar
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -73,15 +74,36 @@ class MainActivity : AppCompatActivity() {
     // Función para cargar las rifas desde la base de datos y mostrarlas en el ListView
     private fun loadRifas() {
         GlobalScope.launch(Dispatchers.IO) {
-            val rifas = rifaDao.getAll()  // Recuperar todas las rifas
-            val rifasNames = rifas.map { "${it.nombre} - ${it.fecha}" }  // Crear lista de nombres y fechas
+            val rifas = rifaDao.getAll()  // Obtener todas las rifas
+            val rifasWithCount = mutableListOf<String>()
+
+            // Recorremos cada rifa para agregar la cantidad de participantes
+            for (rifa in rifas) {
+                // Obtener la cantidad de participantes
+                val participantes = AppDatabase.getDatabase(applicationContext).participanteDao().obtenerPorRifa(rifa.id)
+                val cantidadParticipantes = participantes.size
+
+                // Formateamos el texto para incluir el nombre, fecha y cantidad de participantes
+                rifasWithCount.add("${rifa.nombre} - ${rifa.fecha} (Participantes: $cantidadParticipantes)")
+            }
 
             withContext(Dispatchers.Main) {
+                // Actualizamos el adaptador con los datos nuevos
                 adapter.clear()
-                adapter.addAll(rifasNames)  // Mostrar en el ListView
+                adapter.addAll(rifasWithCount)
+
+                listViewRifas.setOnItemClickListener { _, _, position, _ ->
+                    val rifaSeleccionada = rifas[position]
+                    val intent = Intent(this@MainActivity, AgregarParticipanteActivity::class.java)
+                    intent.putExtra("rifaId", rifaSeleccionada.id)
+                    intent.putExtra("nombreRifa", rifaSeleccionada.nombre)
+                    startActivity(intent)
+                }
             }
         }
     }
+
+
 }
 
 
