@@ -13,24 +13,19 @@
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
 
-        <!-- Actividad principal -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.MyApplication">
+        <!-- MenuActivity será la pantalla de inicio -->
+        <activity android:name=".MenuActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Agregar Participante Activity -->
-        <activity
-            android:name=".AgregarParticipanteActivity"
-            android:exported="true">
-        </activity>
-
+        <!-- Las nuevas actividades que se vayan generando aquí -->
+        <activity android:name=".MainActivity" />
+        <activity android:name=".AgregarParticipanteActivity" />
+        <activity android:name=".BuscarRifaActivity" />
     </application>
 
 </manifest>
