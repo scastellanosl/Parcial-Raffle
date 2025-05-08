@@ -16,4 +16,10 @@ interface RifaDao {
     @Query("SELECT * FROM rifa")
     suspend fun getAll(): List<Rifa>
 
+    @Query("SELECT * FROM rifa WHERE nombre = :nombre LIMIT 1")
+    fun buscarPorNombre(nombre: String): Rifa?
+
+    @Query("DELETE FROM rifa WHERE id = :rifaId")
+    suspend fun eliminarPorId(rifaId: Int)  // Método para eliminar una rifa por su ID
+
 }

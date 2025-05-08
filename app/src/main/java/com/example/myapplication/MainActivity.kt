@@ -4,9 +4,11 @@ import android.os.Bundle
 import java.util.Calendar
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +71,29 @@ class MainActivity : AppCompatActivity() {
 
         // Cargar rifas desde la base de datos
         loadRifas()
+
+        val botonRegreso = Button(this).apply {
+            text = "Volver al Menú"
+            setOnClickListener {
+                val intent = Intent(this@MainActivity, MenuActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
+        }
+
+        // Ajustamos los parámetros de layout con margen
+                val layoutParams = ViewGroup.MarginLayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = 100  // Ajustá este número como quieras
+                }
+
+        val layoutRaiz = findViewById<ViewGroup>(android.R.id.content).getChildAt(0) as ViewGroup
+        layoutRaiz.addView(botonRegreso, layoutParams)
+
     }
+
 
     // Función para cargar las rifas desde la base de datos y mostrarlas en el ListView
     private fun loadRifas() {
@@ -102,7 +126,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
 }
 

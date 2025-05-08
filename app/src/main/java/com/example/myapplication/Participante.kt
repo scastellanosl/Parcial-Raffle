@@ -21,5 +21,6 @@ data class Participante(
     val id: Int = 0,
     val nombre: String,
     val telefono: String,
+    val numero: Int,
     val rifaId: Int
 )
