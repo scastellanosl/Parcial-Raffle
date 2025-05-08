@@ -34,8 +34,9 @@ class BuscarRifaActivity : ComponentActivity() {
     @Composable
     fun BuscarRifaScreen() {
         var nombreBuscado by remember { mutableStateOf("") }
-        var numerosOcupados by remember { mutableStateOf(setOf<Int>()) }
+        var participantes by remember { mutableStateOf(listOf<Participante>()) }
         var rifaEncontrada by remember { mutableStateOf<Rifa?>(null) }
+        var participanteSeleccionado by remember { mutableStateOf<Participante?>(null) }
 
         Column(
             modifier = Modifier
@@ -53,22 +54,18 @@ class BuscarRifaActivity : ComponentActivity() {
             Spacer(modifier = Modifier.height(12.dp))
 
             Button(onClick = {
-                // Buscar en base de datos
                 GlobalScope.launch(Dispatchers.IO) {
                     val rifaDao = AppDatabase.getDatabase(applicationContext).rifaDao()
                     val participanteDao = AppDatabase.getDatabase(applicationContext).participanteDao()
 
                     val rifa = rifaDao.buscarPorNombre(nombreBuscado)
-                    val ocupados = if (rifa != null) {
-                        val participantes = participanteDao.obtenerPorRifa(rifa.id)
-                        participantes.map { it.numero }.toSet()
-                    } else {
-                        emptySet()
-                    }
+                    val lista = if (rifa != null) {
+                        participanteDao.obtenerPorRifa(rifa.id)
+                    } else emptyList()
 
                     withContext(Dispatchers.Main) {
                         rifaEncontrada = rifa
-                        numerosOcupados = ocupados
+                        participantes = lista
                     }
                 }
             }) {
@@ -85,18 +82,24 @@ class BuscarRifaActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                val ocupados = participantes.map { it.numero }.toSet()
+
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(10),
                     contentPadding = PaddingValues(4.dp),
                     modifier = Modifier.fillMaxHeight()
                 ) {
                     items(100) { numero ->
-                        val ocupado = numerosOcupados.contains(numero)
+                        val ocupado = ocupados.contains(numero)
                         Box(
                             modifier = Modifier
                                 .padding(4.dp)
                                 .size(36.dp)
-                                .background(if (ocupado) Color.Gray else Color.Green),
+                                .background(if (ocupado) Color.Gray else Color.Green)
+                                .clickable(enabled = ocupado) {
+                                    participanteSeleccionado =
+                                        participantes.firstOrNull { it.numero == numero }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -111,10 +114,23 @@ class BuscarRifaActivity : ComponentActivity() {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("No se ha encontrado ninguna rifa con ese nombre.")
             }
-
-            // Botón de salida al menú: MenuActivity
-
         }
 
+        // Diálogo para mostrar la información del participante
+        if (participanteSeleccionado != null) {
+            AlertDialog(
+                onDismissRequest = { participanteSeleccionado = null },
+                confirmButton = {
+                    TextButton(onClick = { participanteSeleccionado = null }) {
+                        Text("Cerrar")
+                    }
+                },
+                title = { Text("Información del Participante") },
+                text = {
+                    Text("Nombre: ${participanteSeleccionado!!.nombre}\nTeléfono: ${participanteSeleccionado!!.telefono}")
+                }
+            )
+        }
     }
+
 }

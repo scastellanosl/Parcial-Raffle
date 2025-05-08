@@ -126,6 +126,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    override fun onResume() {
+        super.onResume()
+        loadRifas() // Recarga la lista de rifas al volver a esta pantalla
+    }
+
 
 }
 

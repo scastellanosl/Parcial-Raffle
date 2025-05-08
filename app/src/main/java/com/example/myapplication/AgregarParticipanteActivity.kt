@@ -15,24 +15,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AgregarParticipanteActivity : ComponentActivity() {
 
-    // No necesitamos lateinit para el rifaId, ya que lo pasamos como parámetro
     private var rifaId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Obtener el rifaId del intent
         rifaId = intent.getIntExtra("rifaId", -1)
 
         setContent {
-            val context = LocalContext.current // Obtener el contexto correctamente
+            val context = LocalContext.current
             AgregarParticipanteScreen(rifaId, context)
         }
     }
@@ -46,10 +47,10 @@ fun AgregarParticipanteScreen(rifaId: Int, context: Context) {
     var mensajeError by remember { mutableStateOf("") }
     var cantidadParticipantes by remember { mutableStateOf(0) }
 
-    // Inicializar la base de datos
+    // Inicializamos la base de datos
     val participanteDao = remember { AppDatabase.getDatabase(context).participanteDao() }
 
-    // Conozco la cantidad de participantes de la rifa
+    // Actualizamos la cantidad de participantes cuando la rifa cambia
     LaunchedEffect(rifaId) {
         GlobalScope.launch {
             val participantes = participanteDao.obtenerPorRifa(rifaId)
@@ -93,7 +94,8 @@ fun AgregarParticipanteScreen(rifaId: Int, context: Context) {
             onValueChange = { numero = it },
             label = { Text("Número (0-99)") },
             keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done
+                imeAction = ImeAction.Done,
+                keyboardType = KeyboardType.Number
             ),
             keyboardActions = KeyboardActions(
                 onDone = {}
@@ -122,27 +124,34 @@ fun AgregarParticipanteScreen(rifaId: Int, context: Context) {
                         val participanteConNumero = participanteDao.obtenerPorRifa(rifaId).find { it.numero == numero.toInt() }
 
                         if (participanteConNumero != null) {
-                            // Si el número está ocupado, mostrar error
                             mensajeError = "Este número ya está ocupado"
                         } else {
-                            // Creando el participante
                             val participante = Participante(
                                 nombre = nombre,
                                 telefono = telefono,
                                 rifaId = rifaId,
-                                numero = numero.toInt() // Añadir el número al participante
+                                numero = numero.toInt()
                             )
                             participanteDao.insertar(participante)
-                            // Limpiar los campos cuando se agregue un nuevo participante
+
+                            // Limpiar campos
                             nombre = ""
                             telefono = ""
                             numero = ""
                             mensajeError = ""
-                            Toast.makeText(
-                                context,
-                                "Participante guardado",
-                                Toast.LENGTH_SHORT
-                            ).show()
+
+                            // Actualizar la cantidad de participantes
+                            val participantesActualizados = participanteDao.obtenerPorRifa(rifaId)
+                            cantidadParticipantes = participantesActualizados.size
+
+                            // Mostrar toast en hilo principal
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    context,
+                                    "Participante guardado",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                     }
                 } else {
@@ -153,8 +162,6 @@ fun AgregarParticipanteScreen(rifaId: Int, context: Context) {
         ) {
             Text("Guardar Participante")
         }
-
-        // Botón para eliminar la rifa
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -178,7 +185,6 @@ fun AgregarParticipanteScreen(rifaId: Int, context: Context) {
         ) {
             Text("Borrar Rifa", color = MaterialTheme.colorScheme.onError)
         }
-
     }
 }
 
@@ -187,4 +193,3 @@ fun AgregarParticipanteScreen(rifaId: Int, context: Context) {
 fun DefaultPreview() {
     AgregarParticipanteScreen(rifaId = 1, context = LocalContext.current)
 }
-
